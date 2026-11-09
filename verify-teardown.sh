@@ -11,11 +11,11 @@ no_path() { [ ! -e "$1" ]; }
 no_proc() { ! pgrep -f "$1" >/dev/null 2>&1; }
 no_listener() { ! ss -ltn 2>/dev/null | grep -qE ":$1\\b"; }
 
-check "/etc/clipstr-lab is gone" no_path /etc/clipstr-lab
-check "/tmp/clipstr-lab is gone" no_path /tmp/clipstr-lab
-check "no clipstr.test names left in /etc/hosts" bash -c "! grep -q clipstr.test /etc/hosts"
+check "/etc/clippy-lab is gone" no_path /etc/clippy-lab
+check "/tmp/clippy-lab is gone" no_path /tmp/clippy-lab
+check "no clippy.test names left in /etc/hosts" bash -c "! grep -q clippy.test /etc/hosts"
 check "no lab backend process is running" no_proc 'services/backend.py'
-check "no lab gateway process is running" no_proc 'clipstr-lab/gateway.py'
+check "no lab gateway process is running" no_proc 'clippy-lab/gateway.py'
 for p in 8080 9101 9102 9103 9104 9105; do check "port $p is free" no_listener $p; done
 
 echo

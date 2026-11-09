@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""A tiny reverse proxy. Reads /etc/clipstr-lab/routes.conf on every request, so config edits apply instantly."""
+"""A tiny reverse proxy. Reads /etc/clippy-lab/routes.conf on every request, so config edits apply instantly."""
 import configparser, http.server, socket, socketserver, sys, time, urllib.error, urllib.request
 
-CONF = "/etc/clipstr-lab/routes.conf"
-LOG = "/tmp/clipstr-lab/gateway.log"
+CONF = "/etc/clippy-lab/routes.conf"
+LOG = "/tmp/clippy-lab/gateway.log"
 
 def log(msg):
     with open(LOG, "a") as f:

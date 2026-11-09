@@ -22,7 +22,7 @@ Answer in your own words. Where a question asks for output, paste it in a code b
 
 <!-- replace this line with your answer -->
 
-### Q3. Why did `curl http://127.0.0.1:8080` give a 404 while `curl http://orders.clipstr.test:8080` worked? What is the Host header?
+### Q3. Why did `curl http://127.0.0.1:8080` give a 404 while `curl http://orders.clippy.test:8080` worked? What is the Host header?
 
 **Your answer:**
 

@@ -5,47 +5,47 @@ set -euo pipefail
 cd "$(dirname "$0")"
 command -v python3 >/dev/null || { apt-get update -qq && apt-get install -y -qq python3 >/dev/null; }
 ./teardown.sh >/dev/null 2>&1 || true
-mkdir -p /tmp/clipstr-lab /etc/clipstr-lab; : > /tmp/clipstr-lab/gateway.log
-cp services/gateway.py /tmp/clipstr-lab/gateway.py; sha256sum services/gateway.py | cut -d' ' -f1 > /tmp/clipstr-lab/gateway.sha
+mkdir -p /tmp/clippy-lab /etc/clippy-lab; : > /tmp/clippy-lab/gateway.log
+cp services/gateway.py /tmp/clippy-lab/gateway.py; sha256sum services/gateway.py | cut -d' ' -f1 > /tmp/clippy-lab/gateway.sha
 
 # the routes the gateway uses (the ticket bugs are in here)
-cat > /etc/clipstr-lab/routes.conf <<'C'
+cat > /etc/clippy-lab/routes.conf <<'C'
 # host = which backend answers, and how long the gateway waits for it
-[orders.clipstr.test]
+[orders.clippy.test]
 upstream = 127.0.0.1:9101
 
-[blog.clipstr.test]
+[blog.clippy.test]
 upstream = 127.0.0.1:9112
 
-[reports.clipstr.test]
+[reports.clippy.test]
 upstream = 127.0.0.1:9103
 timeout = 2
 
-[admin.clipstr.test]
+[admin.clippy.test]
 upstream = 127.0.0.2:9104
 
-[shop.clipstr.test]
+[shop.clippy.test]
 upstream = 127.0.0.1:9105
 C
 
 # names: four are registered, one (shop) is forgotten
 cat >> /etc/hosts <<'H'
-# clipstr-lab begin
-127.0.0.1 orders.clipstr.test
-127.0.0.1 blog.clipstr.test
-127.0.0.1 reports.clipstr.test
-127.0.0.1 admin.clipstr.test
-# clipstr-lab end
+# clippy-lab begin
+127.0.0.1 orders.clippy.test
+127.0.0.1 blog.clippy.test
+127.0.0.1 reports.clippy.test
+127.0.0.1 admin.clippy.test
+# clippy-lab end
 H
 
-run() { setsid nohup "$@" >/dev/null 2>&1 & echo $! >> /tmp/clipstr-lab/pids; }
-: > /tmp/clipstr-lab/pids
+run() { setsid nohup "$@" >/dev/null 2>&1 & echo $! >> /tmp/clippy-lab/pids; }
+: > /tmp/clippy-lab/pids
 run python3 services/backend.py orders  9101 0.0.0.0
 run python3 services/backend.py blog    9102 0.0.0.0
 run python3 services/backend.py reports 9103 0.0.0.0 4
 run python3 services/backend.py admin   9104 127.0.0.1
 run python3 services/backend.py shop    9105 0.0.0.0
-run python3 /tmp/clipstr-lab/gateway.py
+run python3 /tmp/clippy-lab/gateway.py
 sleep 1.5
-echo "Gateway listening on port 8080. Try:  curl http://orders.clipstr.test:8080"
-curl -s --max-time 3 http://orders.clipstr.test:8080 || true
+echo "Gateway listening on port 8080. Try:  curl http://orders.clippy.test:8080"
+curl -s --max-time 3 http://orders.clippy.test:8080 || true
