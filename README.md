@@ -1,6 +1,4 @@
-# Networking: Four Tickets Before Lunch
-
-Support forwarded four tickets: "the site is down". Same symptom, four different causes. Diagnose with the right tool each time and fix the real problem.
+<p align="center"><img src="assets/banner.svg" alt="Networking: Four Tickets Before Lunch" width="100%"></p>
 
 | | |
 |-|-|
@@ -17,9 +15,10 @@ Support forwarded four tickets: "the site is down". Same symptom, four different
 5. Commit and push. Open the **Actions** tab of your fork (click *I understand my workflows, go ahead and enable them* the first time). The **Lab check** shows what is still missing.
 6. When the check is green, **submit the URL of your fork** in the course platform.
 
+> [!NOTE]
 > The check only looks at your answers and any files the lab asks you to commit. Your instructor reads your work and may ask you to explain any line.
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
 ## The situation
 
@@ -27,6 +26,7 @@ Tuesday, 09:40. The support inbox has four tickets, all with the same subject li
 
 The truth is that "down" means four different things. One name does not resolve. One route points at the wrong port. One service is too slow for its proxy. One is listening where nobody can reach it. Each needs a different tool, and guessing will waste your morning.
 
+> [!IMPORTANT]
 > **Your mission**
 > - Reproduce each ticket and read the exact error
 > - Use the **right tool for each layer** (DNS, port, process, HTTP) to find the real cause
@@ -34,7 +34,7 @@ The truth is that "down" means four different things. One name does not resolve.
 
 **Time:** 60-75 min | **Cost:** free | **You need:** your Ubuntu environment with `sudo` and Python 3. The lab starts a few small local services, `sudo ./teardown.sh` removes them.
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
 ## Part 0 - Set the scene
 
@@ -46,7 +46,7 @@ sudo ./setup.sh
 
 It starts a **gateway** (a small reverse proxy on port 8080) and five **backend services**. The gateway decides where to send a request using the `Host` header and the file `/etc/clipstr-lab/routes.conf`. Read that file, it is the map of the whole system.
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
 ## Part 1 - Recon: learn what "healthy" looks like
 
@@ -61,9 +61,10 @@ curl -v http://orders.clipstr.test:8080
 3. List what is listening on this machine: `ss -ltnp`. Find the gateway (8080) and the five backends. Which addresses are they bound to? (`0.0.0.0` means all interfaces, `127.0.0.1` means this machine only.)
 4. Read `cat /tmp/clipstr-lab/gateway.log` after a few requests. This is where the gateway tells its story.
 
+> [!NOTE]
 > **Think** A browser sends `Host: orders.clipstr.test` and so does `curl`. What would happen if two websites shared one IP address and one port, and the server did not look at the Host header?
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
 ## Part 2 - The four tickets
 
@@ -77,6 +78,7 @@ Work each ticket like this: **symptom, hypothesis, test, cause, fix**. Fill in `
 curl -v http://shop.clipstr.test:8080
 ```
 
+> [!NOTE]
 > **Predict** Is this a problem with the gateway, the backend, or something earlier? Which of `getent hosts`, `dig`, `ping`, `ss` and `curl --resolve` will confirm it fastest?
 
 Find the cause and fix it. (`getent hosts name` shows how this machine resolves names, including `/etc/hosts`.)
@@ -104,9 +106,10 @@ Compare the two timings. What does the difference tell you about who is at fault
 
 This one looks like ticket 2 at first glance. It is not. Run `ss -ltn` and read the **local address** column of the admin backend carefully. Then read the route to admin in `routes.conf`.
 
+> [!WARNING]
 > **Break it** Do **not** fix this one by making the backend listen on `0.0.0.0`: `verify.sh` penalises that. Explain in your ticket why binding an admin interface to the whole network is a bad habit, and fix the route instead.
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
 ## Part 3 - Prove it, then write it up
 
@@ -116,7 +119,7 @@ sudo ./verify.sh
 
 Then make sure `tickets.md` is a document your teammate could use next time: for each ticket the symptom, the command that found the cause with a one-line interpretation, the cause, and the fix.
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
 ## Level up (optional)
 
