@@ -22,11 +22,20 @@
 
 ## 🎬 The situation
 
-<p align="center"><img src="assets/gifs/situation.gif" width="300" alt=""></p>
+<p align="center"><img src="assets/gifs/situation.gif" width="300" alt="One probe per ticket stops at a different layer: DNS, port, proxy timeout, or a service bound only to localhost"></p>
 
-Tuesday, 09:40. The support inbox has four tickets, all with the same subject line: *"The site is down."* Customers are annoyed and the CTO is walking toward your desk.
+Exam week at the university. The campus cafe sells coffee to two thousand students who have not slept, and every order and receipt goes through Clippy links. At 09:40 the support channel looks like this:
 
-The truth is that "down" means four different things. One name does not resolve. One route points at the wrong port. One service is too slow for its proxy. One is listening where nobody can reach it. Each needs a different tool, and guessing will waste your morning.
+```text
+#support                                                      Tue 09:40
+dara (library desk)   shop link is dead. students are queueing for nothing
+ben (cafe manager)    the blog page says "bad gateway". is that bad?
+lucia (finance)       reports takes forever and then dies. I need it for 11:00
+tomas (it helpdesk)   admin panel unreachable. devs say "works on my machine"
+cto                   four people, four messages, one word: DOWN. who has this?
+```
+
+*You do.* "Down" means four different things here. One name does not resolve. One route points at the wrong port. One service is too slow for its proxy. One is listening where nobody can reach it. Each needs a different tool, and guessing will waste your morning.
 
 > [!IMPORTANT]
 > **Your mission**
@@ -38,7 +47,7 @@ The truth is that "down" means four different things. One name does not resolve.
 
 <p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
-## Part 0 - Set the scene
+## Part 0 - Open the queue
 
 Fork this repository, clone your fork, and run:
 
@@ -50,9 +59,9 @@ It starts a **gateway** (a small reverse proxy on port 8080) and five **backend 
 
 <p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
-## Part 1 - Recon: learn what "healthy" looks like
+## Part 1 - Before the tickets: learn what "healthy" looks like
 
-<p align="center"><img src="assets/gifs/recon.gif" width="300" alt=""></p>
+<p align="center"><img src="assets/gifs/recon.gif" width="300" alt="Traffic flowing between four machines and a central server, as ss -ltnp lists them"></p>
 
 Start with the one that works:
 
@@ -61,7 +70,7 @@ curl -v http://orders.clippy.test:8080
 ```
 
 1. Read the whole `-v` output. Find: the **resolved IP**, the **port**, the **request line**, the `Host` header and the **status code**.
-2. Run `curl http://127.0.0.1:8080`. It works as a connection but answers 404. Why? What changed compared with the call above?
+2. Run `curl http://127.0.0.1:8080`. It connects but answers 404. Why? What changed compared with the call above?
 3. List what is listening on this machine: `ss -ltnp`. Find the gateway (8080) and the five backends. Which addresses are they bound to? (`0.0.0.0` means all interfaces, `127.0.0.1` means this machine only.)
 4. Read `cat /tmp/clippy-lab/gateway.log` after a few requests. This is where the gateway tells its story.
 
@@ -72,30 +81,24 @@ curl -v http://orders.clippy.test:8080
 
 ## Part 2 - The four tickets
 
-Work each ticket like this: **symptom, hypothesis, test, cause, fix**. Fill in `tickets.md` as you go. Do not skip the hypothesis step: write down what you think before running the next command.
+Work each ticket the same way: **symptom, hypothesis, test, cause, fix**. Fill in `tickets.md` as you go. Write your hypothesis *before* the next command, even a wrong one.
 
-### Ticket 1 - `shop.clippy.test`
-
-> *"shop.clippy.test does not open at all."*
+### Ticket 1 - Dara: "shop link is dead"
 
 ```bash
 curl -v http://shop.clippy.test:8080
 ```
 
 > [!NOTE]
-> **Predict** Is this a problem with the gateway, the backend, or something earlier? Which of `getent hosts`, `dig`, `ping`, `ss` and `curl --resolve` will confirm it fastest?
+> **Predict** Gateway, backend, or something earlier? Which of `getent hosts`, `dig`, `ping`, `ss` and `curl --resolve` will confirm it fastest?
 
 Find the cause and fix it. (`getent hosts name` shows how this machine resolves names, including `/etc/hosts`.)
 
-### Ticket 2 - `blog.clippy.test`
-
-> *"The blog shows an error page."*
+### Ticket 2 - Ben: "the blog says bad gateway"
 
 The error says the gateway could not reach an upstream. Read the exact port. Then ask the machine what is actually listening, and compare. Find the cause and fix it.
 
-### Ticket 3 - `reports.clippy.test`
-
-> *"The reports page fails after a couple of seconds, sometimes."*
+### Ticket 3 - Lucia: "reports takes forever and then dies"
 
 ```bash
 time curl -s -o /dev/null -w '%{http_code}\n' http://reports.clippy.test:8080
@@ -104,26 +107,24 @@ time curl -s http://127.0.0.1:9103
 
 Compare the two timings. What does the difference tell you about who is at fault, the backend or the gateway? Fix it in a way you could defend in a post-mortem, and write down what the *better* long-term fix would be.
 
-### Ticket 4 - `admin.clippy.test`
+### Ticket 4 - Tomas: "admin unreachable, works on my machine"
 
-> *"The admin panel is unreachable. The developers say it works on their machine."*
-
-This one looks like ticket 2 at first glance. It is not. Run `ss -ltn` and read the **local address** column of the admin backend carefully. Then read the route to admin in `routes.conf`.
+It looks like ticket 2. It is not. Run `ss -ltn` and read the **local address** column of the admin backend carefully. Then read the route to admin in `routes.conf`.
 
 > [!WARNING]
 > **Break it** Do **not** fix this one by making the backend listen on `0.0.0.0`: `verify.sh` penalises that. Explain in your ticket why binding an admin interface to the whole network is a bad habit, and fix the route instead.
 
 <p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
-## Part 3 - Prove it, then write it up
+## Part 3 - Prove it, then close the tickets
 
-<p align="center"><img src="assets/gifs/verify.gif" width="300" alt=""></p>
+<p align="center"><img src="assets/gifs/verify.gif" width="300" alt="A terminal running verify.sh and printing PASS lines"></p>
 
 ```bash
 sudo ./verify.sh
 ```
 
-Then make sure `tickets.md` is a document your teammate could use next time: for each ticket the symptom, the command that found the cause with a one-line interpretation, the cause, and the fix.
+Then make sure `tickets.md` is a document the next person on call could use: for each ticket the symptom, the command that found the cause with a one-line interpretation, the cause, and the fix. That is your reply to the channel.
 
 <p align="center"><img src="assets/divider.svg" alt="" width="100%"></p>
 
@@ -136,7 +137,7 @@ Then make sure `tickets.md` is a document your teammate could use next time: for
 <!-- teardown:start (generated by labs.py, do not edit) -->
 ## Tear down (mandatory)
 
-<p align="center"><img src="assets/gifs/teardown.gif" width="300" alt=""></p>
+<p align="center"><img src="assets/gifs/teardown.gif" width="300" alt="A terminal running verify-teardown.sh and printing TEARDOWN VERIFIED"></p>
 
 Resources left behind cost money, keep doors open and pollute the next lab. Removing what you created is part of the job, so it is part of the submission: **you must prove it is gone**.
 
